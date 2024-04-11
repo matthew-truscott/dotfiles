@@ -17,6 +17,7 @@ if status is-interactive
   alias cat='batcat'
   alias lg='lazygit'
   alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
+  alias wezterm='flatpak run org.wezfurlong.wezterm'
 
   eval "$(fnm env --use-on-cd)"
 
