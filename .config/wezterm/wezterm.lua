@@ -67,32 +67,21 @@ config.window_padding = {
 
 config.window_background_opacity = 1.0
 
-config.keys = {
-	{
-		key = "LeftArrow",
-		mods = "CTRL|SHIFT",
-		action = wezterm.action({ ActivateTabRelative = -1 }),
-	},
-	{
-		key = "RightArrow",
-		mods = "CTRL|SHIFT",
-		action = wezterm.action({ ActivateTabRelative = 1 }),
-	},
-}
-
 -- Workspaces
 wezterm.on("gui-startup", function(cmd)
 	-- Args
-	local mode = os.getenv("WEZMODE")
+	local mode = os.getenv("WEZMODE") or "normal"
 	local args = { env.fish, "-l" }
+	local window = nil
 
 	if mode == "falcon" then
 		-- FALCON API
-		local falcon, falcon_code_pane, window = mux.spawn_window({
+		local falcon, falcon_code_pane, window_ = mux.spawn_window({
 			workspace = "coding",
 			cwd = env.artemis.falcon,
 			args = args,
 		})
+		window = window_
 		local falcon_build_pane = falcon_code_pane:split({
 			cwd = env.artemis.falcon,
 			size = 0.4,
@@ -146,9 +135,31 @@ wezterm.on("gui-startup", function(cmd)
 			size = 0.3,
 		})
 		workers:set_title("workers")
+	elseif mode == "normal" then
+		local _, _, window_ = mux.spawn_window({ cwd = "/home/matthew.t/", args = args })
+		window = window_
 	else
-		local tab, pane, window = mux.spawn_window(cmd or {})
+		local tab, pane, window_ = mux.spawn_window(cmd or { cwd = "/home/matthew.t/", args = args })
+		window = window_
+	end
+	if window ~= nil then
+		window:gui_window():maximize()
 	end
 end)
+
+wezterm.on("connect", function(cmd)
+	local args = { env.fish, "-l" }
+	local tab, pane, window = mux.spawn_window(cmd or { cwd = "/home/matthew.t/", args = args })
+	if window ~= nil then
+		window:gui_window():maximize()
+	end
+end)
+
+-- External config objects
+local keymaps = require("keymaps")
+
+for k, v in pairs(keymaps) do
+	config[k] = v
+end
 
 return config
