@@ -40,12 +40,6 @@ if status is-interactive
   pyenv init - | source
   pyenv virtualenv-init - | source
 
-  # zellij
-  if set -q ZELLIJ
-  else
-    zellij
-  end
-
   # search for a myInit.fish file UP THE DIRECTORY TREE, starting from the current folder.
   # if found, execute it.
   # Intended for automatically switching to the python  virtual environment on entering the
