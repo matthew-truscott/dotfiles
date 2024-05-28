@@ -11,6 +11,7 @@ if status is-interactive
   end
 
   alias x='xdg-open'
+  alias ssh='kitten ssh'
   alias vi='nvim'
   alias gitignored="git ls-files -v|grep '^S'"
   alias ccat='/usr/bin/cat'
