@@ -19,58 +19,26 @@ if status is-interactive
   alias lg='lazygit'
   alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
   alias wezterm='flatpak run org.wezfurlong.wezterm'
+  alias docker-compose='docker compose'
+  alias sl='ls'
 
-  eval "$(fnm env --use-on-cd)"
-
-  function dark
-    theme_gruvbox 'dark' 'hard'
+  function dark -d "Switch to dark theme"
     set -xU theme dark
+    kitty @ set-colors --all --configured ~/.config/kitty/kanagawa_dark.conf
   end
 
   function light
-    theme_gruvbox 'light' 'medium'
     set -xU theme light
+    kitty @ set-colors --all --configured ~/.config/kitty/kanagawa_light.conf
   end
 
   dark
+  source ~/.config/fish/kanagawa.fish
+
+  eval "$(fnm env --use-on-cd)"
 
   # env
   direnv hook fish | source
-
-  # for pyenv
-  pyenv init - | source
-  pyenv virtualenv-init - | source
-
-  # search for a myInit.fish file UP THE DIRECTORY TREE, starting from the current folder.
-  # if found, execute it.
-  # Intended for automatically switching to the python  virtual environment on entering the
-  # directories.  Can put in other initialization stuff.
-
-  function cd --description 'change directory - fish overload'
-    builtin cd $param $argv
-
-    set -l INIT init.fish
-    set -l CWD (pwd)
-    # if myInit.fish is found in the home directory:
-    if test -f "$CWD/$INIT"
-      source $CWD/$INIT
-      echo "executed: source $CWD/$INIT"
-      return
-    end
-
-    # Look up the directory tree for myInit.fish:
-    set CWD (string split -r -m 1 / $check_dir)[1]
-
-    while test $CWD
-      if test -f "$CWD/$INIT"
-        source $CWD/$INIT
-        echo "executed: source $CWD/$INIT"
-        break;
-      else
-        set CWD (string split -r -m 1 / $check_dir)[1]
-      end  # if ... else ...
-    end  # while 
-  end  # function
 
 end
 

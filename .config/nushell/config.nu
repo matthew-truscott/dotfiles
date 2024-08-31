@@ -143,7 +143,7 @@ let light_theme = {
 
 # The default config record. This is where much of your global configuration is setup.
 $env.config = {
-    show_banner: true # true or false to enable or disable the welcome banner at startup
+    show_banner: false # true or false to enable or disable the welcome banner at startup
 
     ls: {
         use_ls_colors: true # use the LS_COLORS environment variable to colorize output
@@ -258,10 +258,24 @@ $env.config = {
     }
 
     hooks: {
-        pre_prompt: [{ null }] # run before the prompt is shown
+        pre_prompt: [{ ||
+          if (which direnv | is-empty) {
+            return
+          }
+
+          direnv export json | from json | default {} | load-env
+        }]
         pre_execution: [{ null }] # run before the repl input is run
         env_change: {
-            PWD: [{|before, after| null }] # run if the PWD environment is different since the last repl input
+          PWD: ($env.config.hooks.env_change.PWD ++
+          [{
+            condition: {|before, after| [.nvmrc .node-version] | path exists | any { |it| $it }}
+            code: {|before, after|
+              if ('FNM_DIR' in $env) {
+              fnm use # Personally I prefer to use fnm --log-level=quiet use 
+            }}
+          }]
+        )
         }
         display_output: "if (term size).columns >= 100 { table -e } else { table }" # run to display the output of a pipeline
         command_not_found: { null } # return an error message when a command is not found
@@ -864,3 +878,49 @@ $env.config = {
         }
     ]
 }
+
+$env.STARSHIP_SHELL = "nu"
+
+def create_left_prompt [] {
+    starship prompt --cmd-duration $env.CMD_DURATION_MS $'--status=($env.LAST_EXIT_CODE)'
+}
+
+# Use nushell functions to define your right and left prompt
+$env.PROMPT_COMMAND = { || create_left_prompt }
+$env.PROMPT_COMMAND_RIGHT = ""
+
+# The prompt indicators are environmental variables that represent
+# the state of the prompt
+$env.PROMPT_INDICATOR = ""
+$env.PROMPT_INDICATOR_VI_INSERT = ": "
+$env.PROMPT_INDICATOR_VI_NORMAL = "〉"
+$env.PROMPT_MULTILINE_INDICATOR = "::: "
+
+$env.PATH = ($env.PATH | split row (char esep) | prepend '/home/matthew.t/.local/bin/')
+$env.PATH = ($env.PATH | split row (char esep) | prepend '/home/matthew.t/.pyenv/bin/')
+$env.PATH = ($env.PATH | split row (char esep) | prepend $"(pyenv root)/shims")
+
+def lt [...argv: string] {
+    eza -l --git --hyperlink --header ...$argv
+}
+
+def lst [...argv: string] {
+  eza -l --git -T -L 2 --ignore-glob="*.pyc|*.o|*.make|*.cmake" --hyperlink --header ...$argv
+}
+
+def myconf [] {
+    /usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME
+}
+
+
+if not (which fnm | is-empty) {
+  ^fnm env --json | from json | load-env
+  # Checking `Path` for Windows
+  let path = if 'Path' in $env { $env.Path } else { $env.PATH }
+  let node_path = $"($env.FNM_MULTISHELL_PATH)/bin"
+  $env.PATH = ($path | prepend [ $node_path ])
+}
+
+# Alias
+alias vi = nvim
+alias cat = batcat

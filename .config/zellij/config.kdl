@@ -6,6 +6,13 @@ keybinds {
     }
     locked {
         bind "Ctrl g" { SwitchToMode "Normal"; }
+        bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Locked"; }
+        bind "Alt Left" { MoveFocus "Left"; }
+        bind "Alt Down" { MoveFocus "Down"; }
+        bind "Alt Up" { MoveFocus "Up"; }
+        bind "Alt Right" { MoveFocus "Right"; }
+        bind "Left" { GoToPreviousTab; }
+        bind "Right" { GoToNextTab; }
     }
     resize {
         bind "Ctrl n" { SwitchToMode "Normal"; }
@@ -36,6 +43,8 @@ keybinds {
         bind "w" { ToggleFloatingPanes; SwitchToMode "Normal"; }
         bind "e" { TogglePaneEmbedOrFloating; SwitchToMode "Normal"; }
         bind "c" { SwitchToMode "RenamePane"; PaneNameInput 0;}
+        bind "Left" { GoToPreviousTab; }
+        bind "Right" { GoToNextTab; }
     }
     move {
         bind "Ctrl h" { SwitchToMode "Normal"; }
@@ -217,7 +226,7 @@ plugins {
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
 //
-default_shell "nu"
+default_shell "fish"
 
 // Choose the path to override cwd that zellij will use for opening new panes
 //
