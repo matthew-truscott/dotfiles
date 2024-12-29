@@ -11,7 +11,7 @@ if status is-interactive
   end
 
   alias x='xdg-open'
-  alias ssh='kitten ssh'
+  alias s='kitten ssh'
   alias vi='nvim'
   alias gitignored="git ls-files -v|grep '^S'"
   alias ccat='/usr/bin/cat'
@@ -22,20 +22,10 @@ if status is-interactive
   alias docker-compose='docker compose'
   alias sl='ls'
 
-  function dark -d "Switch to dark theme"
-    set -xU theme dark
-    kitty @ set-colors --all --configured ~/.config/kitty/kanagawa_dark.conf
-  end
+  set -x AWS_PROFILE artemis
 
-  function light
-    set -xU theme light
-    kitty @ set-colors --all --configured ~/.config/kitty/kanagawa_light.conf
-  end
-
-  dark
+  # theme
   source ~/.config/fish/kanagawa.fish
-
-  eval "$(fnm env --use-on-cd)"
 
   # env
   direnv hook fish | source
