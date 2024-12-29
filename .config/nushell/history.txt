@@ -1,0 +1,6 @@
+clear
+ls
+cd dev
+ls
+clear
+zellij

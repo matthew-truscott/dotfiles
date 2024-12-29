@@ -1,0 +1,22 @@
+[[language]]
+name = "python"
+
+
+[language-server.pylsp.config.pylsp.plugins]
+flake8 = {enabled = false}
+autopep8 = {enabled = false}
+mccabe = {enabled = false}
+pycodestyle = {enabled = false}
+pyflakes = {enabled = false}
+pylint = {enabled = false}
+yapf = {enabled = false}
+ruff = { enabled = true, ignore = ["F401"], lineLength = 120 }
+
+
+[[language]]
+name = "rust"
+
+# If this doesn't work, you might be on a older release version which handles this differently.
+# Try using [language.config.check] instead of [language-server.rust-analyzer.config.check]
+[language-server.rust-analyzer.config.check]
+command = "clippy"
