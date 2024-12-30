@@ -1,6 +1,9 @@
 if status is-interactive
   set fish_greeting
 
+  # local stuff (don't add this file to git)
+  source ~/.config/fish/local.fish
+
   # Commands to run in interactive sessions can go here
   function lt
     eza -l --git --hyperlink --header $argv
