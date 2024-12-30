@@ -14,18 +14,13 @@ if status is-interactive
   end
 
   alias x='xdg-open'
-  alias s='kitten ssh'
   alias vi='nvim'
   alias gitignored="git ls-files -v|grep '^S'"
   alias ccat='/usr/bin/cat'
   alias cat='batcat'
   alias lg='lazygit'
   alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
-  alias wezterm='flatpak run org.wezfurlong.wezterm'
-  alias docker-compose='docker compose'
   alias sl='ls'
-
-  set -x AWS_PROFILE artemis
 
   # theme
   source ~/.config/fish/kanagawa.fish
