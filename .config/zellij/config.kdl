@@ -1,3 +1,5 @@
+import "env.kdl"
+
 // If you'd like to override the default keybindings completely, be sure to change "keybinds" to "keybinds clear-defaults=true"
 keybinds {
   normal {
@@ -224,7 +226,6 @@ plugins {
 // Choose the path to the default shell that zellij will use for opening new panes
 // Default: $SHELL
 //
-default_shell "/home/matthew.t/.local/bin/fish"
 
 
 // Choose the path to override cwd that zellij will use for opening new panes
