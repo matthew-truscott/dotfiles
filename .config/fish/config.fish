@@ -21,13 +21,24 @@ if status is-interactive
   alias lg='lazygit'
   alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
   alias sl='ls'
+  alias cd='z'
+  alias ccd='cd'
 
   # theme
   source ~/.config/fish/kanagawa.fish
 
+  set -g fish_key_bindings fish_vi_key_bindings
+
   # env
   direnv hook fish | source
+  set -x DIRENV_LOG_FORMAT "$(set_color blue)direnv: $(set_color green)%s$(set_color normal)"
 
+  # jump
+  zoxide init fish | source
+
+  # tide config
+  set --global tide_left_prompt_items pwd git newline character
+  set --global tide_right_prompt_items status cmd_duration context jobs direnv python
 end
 
 
