@@ -1,0 +1,28 @@
+command = /usr/bin/fish
+
+theme = Kanagawa Wave
+
+gtk-tabs-location = bottom
+gtk-toolbar-style = raised-border
+gtk-titlebar-style = tabs
+gtk-wide-tabs = false
+
+font-family = Cascadia Code
+font-size = 12.0
+window-padding-x = 2
+window-padding-y = 2
+
+cursor-style-blink = false
+copy-on-select = clipboard
+bold-is-bright = false
+unfocused-split-opacity = 0.85
+
+keybind = f1=new_split:right
+keybind = shift+enter=text:\x1b\r
+
+# notifications for long-running commands
+notify-on-command-finish = unfocused
+notify-on-command-finish-after = 10s
+
+# inherit working directory in splits
+split-inherit-working-directory = true
