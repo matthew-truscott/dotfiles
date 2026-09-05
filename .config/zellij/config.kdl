@@ -1,6 +1,71 @@
 import "env.kdl"
 default_shell "fish"
 
+// Follow the desktop light/dark toggle (Super+`) live. Ghostty forwards the
+// org.freedesktop.appearance change into the PTY as CSI 2031; zellij reacts and
+// re-forwards it to nvim/fish in its panes. Themes defined in the `themes` block.
+// `theme` is the startup/fallback appearance used until the terminal reports
+// its light/dark mode (CSI 2031 / DSR 997). Set it to the dark variant so a
+// fresh session opens dark instead of falling back to zellij's built-in default.
+theme "kanagawa-wave"
+theme_dark "kanagawa-wave"
+theme_light "kanagawa-lotus"
+
+// Kanagawa themes (style zellij's OWN chrome — pane *content* still uses
+// Ghostty's palette). zellij derives the component styles from these, so the
+// accents are no longer hand-picked: the focused pane border and the active
+// tab chip both come from `green`, and the special-mode border from `orange`.
+// The previous hand-tuned component version is in config.kdl.bak-components.
+themes {
+    // CLASSIC palette format, deliberately — not the newer component format
+    // (text_unselected / ribbon_selected / ...). zellij parses a theme as one
+    // or the other: classic only if EVERY node is a palette colour name, else
+    // component (kdl/mod.rs:5219). There is no hybrid.
+    //
+    // It has to be classic because the bar plugins read Palette, not Styling,
+    // and zellij's Styling->Palette fallback (data.rs:1565) scavenges palette
+    // slots from unrelated component fields — it handed `white` the green from
+    // ribbon_unselected.emphasis_1, `blue` a yellow, `orange` a blue, and
+    // hardcoded theme_hue to Dark. Both bars rendered a scrambled Kanagawa.
+    // Going classic makes Palette exact and lets zellij derive Styling via the
+    // reverse conversion, which is coherent.
+    //
+    // Two conventions that look odd but are load-bearing:
+    //   black/white are the BACKGROUND/FOREGROUND pair, not literal black and
+    //   white — Styling picks (base, background) from them by theme_hue, which
+    //   the classic format cannot set and which always resolves Dark. So the
+    //   light theme puts its dark ink in `white` and its pale paper in `black`.
+    //
+    //   `fg` becomes ribbon_unselected's BACKGROUND (the inactive tab chip),
+    //   not the text colour. That is why it is a mid-tone here.
+    kanagawa-wave {
+        fg "#DCD7BA"
+        bg "#2A2A37"
+        black "#1F1F28"
+        white "#DCD7BA"
+        red "#E82424"
+        green "#98BB6C"
+        yellow "#E6C384"
+        blue "#7E9CD8"
+        magenta "#957FB8"
+        orange "#FFA066"
+        cyan "#7FB4CA"
+    }
+    kanagawa-lotus {
+        fg "#545464"
+        bg "#E7DBA0"
+        black "#F2ECBC"
+        white "#545464"
+        red "#C84053"
+        green "#6F894E"
+        yellow "#77713F"
+        blue "#4D699B"
+        magenta "#B35B79"
+        orange "#CC6D00"
+        cyan "#597B75"
+    }
+}
+
 // If you'd like to override the default keybindings completely, be sure to change "keybinds" to "keybinds clear-defaults=true"
 keybinds {
   normal {
@@ -9,6 +74,13 @@ keybinds {
   }
   locked {
     bind "Ctrl g" { SwitchToMode "Normal"; }
+    // Nav that survives Locked mode (the requested bypass). These chords are
+    // therefore NEVER passed through to a fullscreen app like nvim. Ctrl+Alt
+    // (not Ctrl+Shift) avoids the ^H/^J/^L collapse that collides with TUIs.
+    bind "Ctrl Alt h" { GoToPreviousTab; }
+    bind "Ctrl Alt l" { GoToNextTab; }
+    bind "Ctrl Alt j" { FocusNextPane; }
+    bind "Ctrl Alt k" { FocusPreviousPane; }
     bind "Alt z" { ToggleFocusFullscreen; SwitchToMode "Locked"; }
     bind "Alt Left" { MoveFocus "Left"; }
     bind "Alt Down" { MoveFocus "Down"; }
@@ -59,9 +131,27 @@ keybinds {
   tab {
     bind "Ctrl t" { SwitchToMode "Normal"; }
     bind "r" { SwitchToMode "RenameTab"; TabNameInput 0; }
-    bind "h" "Left" "Up" "k" { GoToPreviousTab; }
-    bind "l" "Right" "Down" "j" { GoToNextTab; }
-    bind "n" { NewTab; SwitchToMode "Normal"; }
+    // Horizontal keys reorder the tab, vertical keys cycle between tabs. Neither
+    // returns to Normal, so h/h/h walks a tab across several positions in one go.
+    bind "h" "Left" { MoveTab "Left"; }
+    bind "l" "Right" { MoveTab "Right"; }
+    bind "k" "Up" { GoToPreviousTab; }
+    bind "j" "Down" { GoToNextTab; }
+    // Picker rather than a bare NewTab: code (a repo under ~/code/turintech,
+    // opened with code.kdl) / shell / worktree. A plain tab is still one
+    // keystroke away inside it. Absolute path — KDL does not expand $HOME.
+    bind "n" {
+      Run "/home/matthew.t/.config/zellij/new-tab.sh" {
+        floating true
+        close_on_exit true
+        name "new tab"
+        width "50%"
+        height "50%"
+        x "25%"
+        y "25%"
+      }
+      SwitchToMode "Normal"
+    }
     bind "x" { CloseTab; SwitchToMode "Normal"; }
     bind "s" { ToggleActiveSyncTab; SwitchToMode "Normal"; }
     bind "b" { BreakPane; SwitchToMode "Normal"; }
@@ -157,6 +247,39 @@ keybinds {
   shared_except "locked" {
     bind "Ctrl g" { SwitchToMode "Locked"; }
     bind "Ctrl q" { Quit; }
+    // --- Ghostty muscle-memory mirror (non-modal: fire directly, no mode) ---
+    // Tabs
+    bind "Ctrl Shift t" { NewTab; }
+    bind "Ctrl Shift Left" "Ctrl Shift Tab" "Ctrl Alt h" { GoToPreviousTab; }
+    bind "Ctrl Shift Right" "Ctrl Tab" "Ctrl Alt l" { GoToNextTab; }
+    bind "Ctrl PageUp" { GoToPreviousTab; }
+    bind "Ctrl PageDown" { GoToNextTab; }
+    bind "Alt 1" { GoToTab 1; }
+    bind "Alt 2" { GoToTab 2; }
+    bind "Alt 3" { GoToTab 3; }
+    bind "Alt 4" { GoToTab 4; }
+    bind "Alt 5" { GoToTab 5; }
+    bind "Alt 6" { GoToTab 6; }
+    bind "Alt 7" { GoToTab 7; }
+    bind "Alt 8" { GoToTab 8; }
+    // Splits (panes)
+    bind "Ctrl Shift o" "F1" { NewPane "Right"; }
+    bind "Ctrl Shift e" { NewPane "Down"; }
+    bind "Ctrl Shift Enter" { ToggleFocusFullscreen; }
+    // Focus movement: zellij's default Alt+hjkl (defined in the block below,
+    // with edge-wrap to adjacent tabs). Ctrl+Alt+j/k cycle through ALL panes
+    // (next/prev, not just directional) and bypass Locked (mirrored in locked).
+    // Ctrl+Alt (not Ctrl+Shift) avoids the ^J/^K collision with TUI apps like
+    // Claude Code, where Ctrl+Shift+j collapses to newline.
+    bind "Ctrl Alt j" { FocusNextPane; }
+    bind "Ctrl Alt k" { FocusPreviousPane; }
+    bind "Super Ctrl [" { FocusPreviousPane; }
+    bind "Super Ctrl ]" { FocusNextPane; }
+    // Resize splits
+    bind "Super Ctrl Shift Up" { Resize "Increase Up"; }
+    bind "Super Ctrl Shift Down" { Resize "Increase Down"; }
+    bind "Super Ctrl Shift Left" { Resize "Increase Left"; }
+    bind "Super Ctrl Shift Right" { Resize "Increase Right"; }
     bind "Alt n" { NewPane; }
     bind "Alt i" { MoveTab "Left"; }
     bind "Alt o" { MoveTab "Right"; }
@@ -206,6 +329,38 @@ plugins {
     }
     filepicker location="zellij:strider" {
         cwd "/"
+    }
+    // zjstatus replaces zellij:status-bar. The stock bar's per-mode hints are
+    // compiled into its wasm and it has no label for MoveTab at all, so the
+    // tab-reorder binding could never be advertised there no matter how it was
+    // bound. Here every hint line is ours to write — which also means nothing
+    // derives from the keybinds block above, so the two must be kept in sync by
+    // hand. Edit a bind, edit its hint.
+    //
+    // Defined as an alias so the three layouts each reference `zjstatus` rather
+    // than carrying their own copy of this block.
+    zjstatus location="file:~/.config/zellij/plugins/zjstatus.wasm" {
+        format_left  "{mode}"
+        format_right "#[fg=cyan]{session} "
+        format_space ""
+
+        border_enabled "false"
+        hide_frame_for_single_pane "false"
+
+        mode_normal "#[fg=green,bold] BASE #[fg=blue]Ctrl#[fg=white] + #[fg=blue]g#[fg=white] lock #[fg=blue]p#[fg=white] pane #[fg=blue]t#[fg=white] tab #[fg=blue]n#[fg=white] resize #[fg=blue]h#[fg=white] move #[fg=blue]s#[fg=white] scroll #[fg=blue]o#[fg=white] session #[fg=blue]q#[fg=white] quit"
+        mode_locked "#[fg=red,bold] LOCKED #[fg=blue]Ctrl g#[fg=white] unlock #[fg=blue]Ctrl+Alt h/l#[fg=white] tab #[fg=blue]Ctrl+Alt j/k#[fg=white] pane #[fg=blue]Alt z#[fg=white] fullscreen"
+        mode_tab "#[fg=orange,bold] TAB #[fg=orange]h/l#[fg=white] move tab #[fg=orange]j/k#[fg=white] switch tab #[fg=orange]n#[fg=white] new #[fg=orange]x#[fg=white] close #[fg=orange]r#[fg=white] rename #[fg=orange]b#[fg=white] break pane #[fg=orange]1-9#[fg=white] go to #[fg=orange]Esc#[fg=white] back"
+        mode_pane "#[fg=orange,bold] PANE #[fg=orange]h/j/k/l#[fg=white] focus #[fg=orange]n/d/r#[fg=white] new #[fg=orange]x#[fg=white] close #[fg=orange]f#[fg=white] fullscreen #[fg=orange]w#[fg=white] float #[fg=orange]e#[fg=white] embed #[fg=orange]c#[fg=white] rename #[fg=orange]Esc#[fg=white] back"
+        mode_resize "#[fg=orange,bold] RESIZE #[fg=orange]h/j/k/l#[fg=white] grow #[fg=orange]H/J/K/L#[fg=white] shrink #[fg=orange]+/-#[fg=white] all #[fg=orange]Esc#[fg=white] back"
+        mode_move "#[fg=orange,bold] MOVE #[fg=orange]h/j/k/l#[fg=white] move pane #[fg=orange]n/Tab#[fg=white] next #[fg=orange]p#[fg=white] previous #[fg=orange]Esc#[fg=white] back"
+        mode_scroll "#[fg=orange,bold] SCROLL #[fg=orange]j/k#[fg=white] line #[fg=orange]Ctrl f/b#[fg=white] page #[fg=orange]d/u#[fg=white] half #[fg=orange]s#[fg=white] search #[fg=orange]e#[fg=white] edit buffer #[fg=orange]Esc#[fg=white] back"
+        mode_search "#[fg=orange,bold] SEARCH #[fg=orange]n/p#[fg=white] next/prev #[fg=orange]c#[fg=white] case #[fg=orange]w#[fg=white] wrap #[fg=orange]o#[fg=white] whole word #[fg=orange]Esc#[fg=white] back"
+        mode_enter_search "#[fg=yellow,bold] SEARCH #[fg=white]type a term then #[fg=yellow]Enter#[fg=white], #[fg=yellow]Esc#[fg=white] to cancel"
+        mode_session "#[fg=orange,bold] SESSION #[fg=orange]d#[fg=white] detach #[fg=orange]w#[fg=white] session manager #[fg=orange]Ctrl s#[fg=white] scroll #[fg=orange]Esc#[fg=white] back"
+        mode_tmux "#[fg=orange,bold] TMUX #[fg=orange]c#[fg=white] new tab #[fg=orange]n/p#[fg=white] next/prev #[fg=orange]%#[fg=white] split right #[fg=orange]\"#[fg=white] split down #[fg=orange]z#[fg=white] fullscreen #[fg=orange]d#[fg=white] detach #[fg=orange]Esc#[fg=white] back"
+        mode_rename_tab "#[fg=yellow,bold] RENAME TAB #[fg=white]type a name then #[fg=yellow]Enter#[fg=white], #[fg=yellow]Esc#[fg=white] to cancel"
+        mode_rename_pane "#[fg=yellow,bold] RENAME PANE #[fg=white]type a name then #[fg=yellow]Enter#[fg=white], #[fg=yellow]Esc#[fg=white] to cancel"
+        mode_prompt "#[fg=yellow,bold] PROMPT "
     }
 }
 
@@ -291,10 +446,15 @@ plugins {
 //
 // theme "default"
 
-// The name of the default layout to load on startup
-// Default: "default"
+// The name of the default layout to load on startup.
 //
-// default_layout "compact"
+// Named "base" rather than "default" deliberately: a layouts/default.kdl
+// silently SHADOWS zellij's built-in default layout, so the two are
+// indistinguishable at a glance and any session created outside this config
+// (session-manager, welcome screen) can quietly fall back to the built-in one
+// with no hint that it happened. An explicit name makes the collision
+// impossible and this line the single source of truth.
+default_layout "base"
 
 // Choose the mode that zellij uses when starting up.
 // Default: normal
@@ -308,7 +468,16 @@ plugins {
 //   - true (default)
 //   - false
 //
-// mouse_mode false
+mouse_mode true
+
+// zellij 0.45 turned on hover effects + pane grouping by default
+// (`advanced_mouse_actions`). Hover needs any-event mouse tracking (mode 1003),
+// and zellij forwards those buttonless motion reports into panes that only
+// requested 1002 -- nvim decodes them as <MiddleDrag>/<MiddleMouse>, and
+// middle-click pastes the * register, so nudging the mouse after a left click
+// pastes into the buffer. Hover is cosmetic; mouse_mode stays on, so
+// copy-on-select and click-to-focus are unaffected.
+advanced_mouse_actions false
 
 // Configure the scroll back buffer size
 // This is the number of lines zellij stores for each pane in the scroll back
@@ -324,7 +493,7 @@ plugins {
 // that will be used by default if this option is not set.
 // Examples:
 //
-// copy_command "xclip -selection clipboard" // x11
+copy_command "xclip -selection clipboard" // x11
 // copy_command "wl-copy"                    // wayland
 // copy_command "pbcopy"                     // osx
 
@@ -345,7 +514,9 @@ plugins {
 // Path to the default editor to use to edit pane scrollbuffer
 // Default: $EDITOR or $VISUAL
 //
-// scrollback_editor "/usr/bin/vim"
+// nvim (bob-managed) has clipboard support; the bare $EDITOR fallback resolves
+// to vim.basic (-clipboard) in the server's frozen env, so yanks never reach X11.
+scrollback_editor "/home/matthew.t/.local/share/bob/nvim-bin/nvim"
 
 // When attaching to an existing session with other users,
 // should the session be mirrored (true)

@@ -1,0 +1,15 @@
+#!/bin/sh
+# Ghostty's startup command. Exists only to launch zellij through a LOGIN FISH.
+#
+# Ghostty ran `zellij -l welcome` directly, so the zellij SERVER inherited the
+# bare session PATH (~/.cargo/bin, ~/.local/bin, /usr/*). That matters because
+# zellij serializes each pane as the process actually RUNNING in it, not the
+# command the layout launched: a pane started as `fish -l -C "claude -c"` is
+# recorded as plain `claude -c`. On resurrection ("waiting to run" + Enter) it
+# re-runs THAT, with the server's env — no login fish, no direnv, so ~/go/bin
+# (lazygit), bob's nvim-bin and the project .venv are all missing.
+#
+# A login fish here re-resolves PATH once, and every server the terminal spawns
+# inherits it, which fixes resurrected panes too. direnv still has to be fired
+# per pane (see the layouts) because its fish hook runs on fish_prompt.
+exec fish -l -c 'exec zellij -l welcome'

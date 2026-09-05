@@ -1,11 +1,24 @@
-command = /usr/bin/fish
+# Auto-start zellij so every Ghostty window is a zellij session. `-l welcome` loads
+# zellij's builtin welcome layout: a session picker listing running/resurrectable
+# sessions ([ATTACH] / [EXITED]) where you can also type a name to start a fresh
+# one. zellij launches fish itself (default_shell "fish").
+# The picker itself runs in a throwaway session, which zellij reaps once you pick.
+# To skip the picker and always land in one shared session, use `command = zellij
+# attach -c main`; for an unnamed session per window, just `command = zellij`.
+# Not `zellij -l welcome` directly: that gives the zellij SERVER the bare session
+# PATH, and resurrected panes ("waiting to run") re-run their command in it.
+# The wrapper is a one-liner that execs zellij through a login fish.
+command = /home/matthew.t/.local/bin/zellij-welcome
 
-theme = Kanagawa Wave
+# Follow the system color-scheme (org.freedesktop.appearance) live.
+theme = light:Kanagawa Lotus,dark:Kanagawa Wave
 
-gtk-tabs-location = bottom
-gtk-toolbar-style = raised-border
-gtk-titlebar-style = tabs
-gtk-wide-tabs = false
+# zellij owns tabs/sessions and i3 draws the borders, so Ghostty's own titlebar
+# and tab strip are dead weight — drop the decoration entirely. This also makes
+# the gtk-tabs-location / gtk-titlebar-style / gtk-wide-tabs settings moot, so
+# they're gone. `toggle_window_decorations` can bring it back at runtime if
+# ever needed.
+window-decoration = none
 
 font-family = Cascadia Code
 font-size = 12.0
@@ -14,11 +27,59 @@ window-padding-y = 2
 
 cursor-style-blink = false
 copy-on-select = clipboard
+
+# Tame hi-res Logitech scroll wheel: it emits ~8-10 events per physical notch and
+# Ghostty counts each as a full click, so the terminal scrolls ~8-10x too fast
+# (browsers handle hi-res natively, hence fine there). `precision` scales the
+# hi-res events (your mouse); `discrete` stays 1.0 so any standard notched wheel
+# is unaffected. Nudge precision DOWN for slower, UP toward 1.0 for faster.
+# Also tames the ctrl+scroll zellij pane resize, which rides the same events.
+mouse-scroll-multiplier = precision:0.1,discrete:1.0
 bold-is-bright = false
 unfocused-split-opacity = 0.85
 
-keybind = f1=new_split:right
 keybind = shift+enter=text:\x1b\r
+
+# Delegate tab/split keys to zellij: unbind them here so Ghostty passes the chord
+# down the PTY (Kitty keyboard protocol) to zellij, which mirrors them 1:1.
+# Kept in Ghostty: ctrl+shift+n (new window), ctrl+shift+w (close), copy/paste.
+keybind = f1=unbind
+keybind = ctrl+shift+t=unbind
+keybind = ctrl+shift+o=unbind
+keybind = ctrl+shift+e=unbind
+keybind = ctrl+shift+enter=unbind
+keybind = ctrl+shift+tab=unbind
+keybind = ctrl+tab=unbind
+keybind = ctrl+shift+arrow_left=unbind
+keybind = ctrl+shift+arrow_right=unbind
+keybind = ctrl+page_up=unbind
+keybind = ctrl+page_down=unbind
+keybind = ctrl+alt+arrow_up=unbind
+keybind = ctrl+alt+arrow_down=unbind
+keybind = ctrl+alt+arrow_left=unbind
+keybind = ctrl+alt+arrow_right=unbind
+keybind = super+ctrl+[=unbind
+keybind = super+ctrl+]=unbind
+keybind = super+ctrl+shift+arrow_up=unbind
+keybind = super+ctrl+shift+arrow_down=unbind
+keybind = super+ctrl+shift+arrow_left=unbind
+keybind = super+ctrl+shift+arrow_right=unbind
+keybind = alt+one=unbind
+keybind = alt+two=unbind
+keybind = alt+three=unbind
+keybind = alt+four=unbind
+keybind = alt+five=unbind
+keybind = alt+six=unbind
+keybind = alt+seven=unbind
+keybind = alt+eight=unbind
+keybind = alt+digit_1=unbind
+keybind = alt+digit_2=unbind
+keybind = alt+digit_3=unbind
+keybind = alt+digit_4=unbind
+keybind = alt+digit_5=unbind
+keybind = alt+digit_6=unbind
+keybind = alt+digit_7=unbind
+keybind = alt+digit_8=unbind
 
 # notifications for long-running commands
 notify-on-command-finish = unfocused
@@ -26,3 +87,5 @@ notify-on-command-finish-after = 10s
 
 # inherit working directory in splits
 split-inherit-working-directory = true
+
+window-save-state = always
