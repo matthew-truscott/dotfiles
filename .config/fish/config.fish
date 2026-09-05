@@ -6,11 +6,6 @@ if status is-interactive
 
   # Commands to run in interactive sessions can go here
 
-  alias x='xdg-open'
-  alias vi='nvim'
-  alias gitignored="git ls-files -v|grep '^S'"
-  alias lg='lazygit'
-  alias config='/usr/bin/git --git-dir=$HOME/.cfg/ --work-tree=$HOME'
   alias sl='l'
 
   set -g fish_key_bindings fish_vi_key_bindings
